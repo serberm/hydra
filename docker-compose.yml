@@ -1,0 +1,43 @@
+version: "1.0"
+services:
+
+  postgres:
+    image: postgres:11-alpine
+    restart: on-failure
+    environment:
+      PGUSER: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - redis-volume:/data
+    ports:
+      - "6379:6379"
+
+  migration:
+    image: hydra/migration
+    build: migration
+    restart: on-failure
+    volumes:
+      - ./migration/versions:/versions
+    environment:
+      DATABASE_URL: postgres://postgres:@postgres/postgres?sslmode=disable
+    depends_on:
+      - postgres
+  ui:
+    image: hydra/ui
+    build: ui
+    restart: on-failure
+    volumes:
+      - ./ui:/usr/src/app
+    ports:
+      - "8080:3000"
+   
+volumes:
+  db-volume:
+  redis-volume:
